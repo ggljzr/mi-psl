@@ -8,13 +8,15 @@ import scalafx.Includes._
 import scalafx.scene.Scene
 import scalafx.scene.control.Label
 import scalafx.scene.layout.BorderPane
-import scalafx.scene.image.{Image, ImageView, PixelWriter, WritableImage}
+import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.control.{Button, ProgressBar}
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
 
 import scalafx.event.ActionEvent
+
+import depthblur.DepthBlurAlg
 
 
 object DepthBlur extends JFXApp {
@@ -51,10 +53,9 @@ object DepthBlur extends JFXApp {
       }
 
       display.onMouseClicked = (event: MouseEvent) => {
-        val x = event.sceneX
-        val y = event.sceneY
-
-        println(s"$x, $y")
+        val x = event.sceneX.toInt
+        val y = event.sceneY.toInt
+        DepthBlurAlg.test(x, y, img, dpt)
       }
 
       content = new VBox{
