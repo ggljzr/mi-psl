@@ -11,7 +11,7 @@ import scalafx.scene.layout.BorderPane
 import scalafx.scene.image.{Image, ImageView, PixelWriter, WritableImage}
 import scalafx.scene.control.{Button, ProgressBar}
 import scalafx.scene.input.MouseEvent
-import scalafx.scene.layout.VBox
+import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
 
 import scalafx.event.ActionEvent
@@ -36,15 +36,16 @@ object DepthBlur extends JFXApp {
 
     scene = new Scene{
       val mapToggle = new Button("Map toggle")
+      val applyFilter = new Button("Apply filter")
       val display = new ImageView(img)
 
       mapToggle.onAction = handle{
         if(showDepth == true){
-          display.image = dpt
+          display.image = img
           showDepth = false
         }
         else{
-          display.image = img
+          display.image = dpt
           showDepth = true
         }
       }
@@ -57,7 +58,8 @@ object DepthBlur extends JFXApp {
       }
 
       content = new VBox{
-        children = Seq(display, mapToggle)
+        val buttons = new HBox(5.0, mapToggle, applyFilter)
+        children = Seq(display, buttons)
       }
     }
   }
