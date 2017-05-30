@@ -9,7 +9,7 @@ import scalafx.scene.Scene
 import scalafx.scene.control.Label
 import scalafx.scene.layout.BorderPane
 import scalafx.scene.image.{Image, ImageView}
-import scalafx.scene.control.{Button, ProgressBar}
+import scalafx.scene.control.{Button, RadioButton, ToggleGroup}
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
@@ -37,16 +37,32 @@ object DepthBlur extends JFXApp {
     var showDepth = false
 
     scene = new Scene{
-      val mapToggle = new Button("Map toggle")
-      val applyFilter = new Button("Apply filter")
+      val mapToggle = new Button("Show depth map")
+      val reset = new Button("Reset")
+      val save = new Button("Save")
+
+      val filterGroup = new ToggleGroup()
+      val rbBoxFilter = new RadioButton("Box filter")
+      val rbBilateralFilter = new RadioButton("Bilateral filter")
+      rbBoxFilter.setToggleGroup(filterGroup)
+      rbBilateralFilter.setToggleGroup(filterGroup)
+      rbBoxFilter.setSelected(true)
+
+      val buttons = new HBox(5.0, mapToggle, reset, save)
+      val info = new Label("Click to image to apply filter.")
       val display = new ImageView(img)
+
+      val displayControl = new VBox(5.0, display, info, buttons)
+      val filterSelect = new VBox(5.0, rbBoxFilter, rbBilateralFilter)
 
       mapToggle.onAction = handle{
         if(showDepth == true){
+          mapToggle.text = "Show depth map"
           display.image = img
           showDepth = false
         }
         else{
+          mapToggle.text = "Show original image"
           display.image = dpt
           showDepth = true
         }
@@ -55,13 +71,10 @@ object DepthBlur extends JFXApp {
       display.onMouseClicked = (event: MouseEvent) => {
         val x = event.sceneX.toInt
         val y = event.sceneY.toInt
-        DepthBlurAlg.test(x, y, img, dpt)
+        DepthBlurAlg.boxFilter(x, y, img, dpt)
       }
 
-      content = new VBox{
-        val buttons = new HBox(5.0, mapToggle, applyFilter)
-        children = Seq(display, buttons)
-      }
+      content = new HBox(5.0, displayControl, filterSelect)
     }
   }
 }
