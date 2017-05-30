@@ -14,6 +14,9 @@ import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
 
+
+import javafx.scene.control.{RadioButton => JfxRadioBtn}
+
 import scalafx.event.ActionEvent
 
 import depthblur.DepthBlurAlg
@@ -37,6 +40,9 @@ object DepthBlur extends JFXApp {
     var showDepth = false
 
     scene = new Scene{
+
+      val defaultInfoMessage = "Click image to apply filter."
+
       val mapToggle = new Button("Show depth map")
       val reset = new Button("Reset")
       val save = new Button("Save")
@@ -49,7 +55,7 @@ object DepthBlur extends JFXApp {
       rbBoxFilter.setSelected(true)
 
       val buttons = new HBox(5.0, mapToggle, reset, save)
-      val info = new Label("Click to image to apply filter.")
+      val info = new Label(defaultInfoMessage)
       val display = new ImageView(img)
 
       val displayControl = new VBox(5.0, display, info, buttons)
@@ -68,10 +74,23 @@ object DepthBlur extends JFXApp {
         }
       }
 
+      reset.onAction = handle{
+        display.image = img
+        info.text = defaultInfoMessage
+      }
+
       display.onMouseClicked = (event: MouseEvent) => {
         val x = event.sceneX.toInt
         val y = event.sceneY.toInt
-        DepthBlurAlg.boxFilter(x, y, img, dpt)
+        val filterBtn = filterGroup.selectedToggle().asInstanceOf[JfxRadioBtn]
+        val filterName = filterBtn.getText()
+
+        filterName match {
+          case "Box filter" => DepthBlurAlg.boxFilter(x, y, img, dpt)
+          case "Bilateral filter" => DepthBlurAlg.bilateralFilter(x, y, img, dpt)
+        }
+        
+        info.text = s"Applying $filterName at [$x, $y]."
       }
 
       content = new HBox(5.0, displayControl, filterSelect)
