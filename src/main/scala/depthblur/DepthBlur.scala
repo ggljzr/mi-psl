@@ -52,7 +52,8 @@ object DepthBlur extends JFXApp {
 
       val mapToggle = new Button("Show depth map")
       val reset = new Button("Reset")
-      val save = new Button("Save")
+      val save = new Button("Save image")
+      val load = new Button("Load image")
 
       val filterGroup = new ToggleGroup()
       val rbBoxFilter = new RadioButton("Box filter")
@@ -63,7 +64,7 @@ object DepthBlur extends JFXApp {
       rbNegation.setToggleGroup(filterGroup)
       rbBoxFilter.setSelected(true)
 
-      val buttons = new HBox(5.0, mapToggle, reset, save)
+      val buttons = new HBox(5.0, mapToggle, reset, save, load)
       val info = new Label(defaultInfoMessage)
       val display = new ImageView(img)
 
@@ -94,6 +95,12 @@ object DepthBlur extends JFXApp {
         val filename = fileChooser.showSaveDialog(stage)
         println(s"saving image in $filename")
       }
+
+      load.onAction = handle{
+        val filename = fileChooser.showOpenDialog(stage)
+        println(s"opening image in $filename")
+      }
+
 
       display.onMouseClicked = (event: MouseEvent) => {
         val x = event.sceneX.toInt
