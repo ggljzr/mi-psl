@@ -14,7 +14,6 @@ import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
 
-
 import javafx.scene.control.{RadioButton => JfxRadioBtn}
 
 import scalafx.event.ActionEvent
@@ -50,8 +49,10 @@ object DepthBlur extends JFXApp {
       val filterGroup = new ToggleGroup()
       val rbBoxFilter = new RadioButton("Box filter")
       val rbBilateralFilter = new RadioButton("Bilateral filter")
+      val rbNegation = new RadioButton("Negation")
       rbBoxFilter.setToggleGroup(filterGroup)
       rbBilateralFilter.setToggleGroup(filterGroup)
+      rbNegation.setToggleGroup(filterGroup)
       rbBoxFilter.setSelected(true)
 
       val buttons = new HBox(5.0, mapToggle, reset, save)
@@ -59,7 +60,7 @@ object DepthBlur extends JFXApp {
       val display = new ImageView(img)
 
       val displayControl = new VBox(5.0, display, info, buttons)
-      val filterSelect = new VBox(5.0, rbBoxFilter, rbBilateralFilter)
+      val filterSelect = new VBox(5.0, rbBoxFilter, rbBilateralFilter, rbNegation)
 
       mapToggle.onAction = handle{
         if(showDepth == true){
@@ -75,21 +76,33 @@ object DepthBlur extends JFXApp {
       }
 
       reset.onAction = handle{
+        mapToggle.text = "Show depth map"
         display.image = img
         info.text = defaultInfoMessage
+        showDepth = false
       }
 
       display.onMouseClicked = (event: MouseEvent) => {
         val x = event.sceneX.toInt
         val y = event.sceneY.toInt
+
+        //cast to java.scene.control.RadioButton
+        //since I need .getText() method
         val filterBtn = filterGroup.selectedToggle().asInstanceOf[JfxRadioBtn]
-        val filterName = filterBtn.getText()
+        val filterName = filterBtn.getText
 
         filterName match {
-          case "Box filter" => DepthBlurAlg.boxFilter(x, y, img, dpt)
-          case "Bilateral filter" => DepthBlurAlg.bilateralFilter(x, y, img, dpt)
+          case "Box filter" => { 
+            display.image = DepthBlurAlg.boxFilter(x, y, img, dpt)
+          }
+          case "Bilateral filter" => { 
+            display.image = DepthBlurAlg.bilateralFilter(x, y, img, dpt)
+          }
+          case "Negation" => {
+            display.image = DepthBlurAlg.negation(img)
+          }
         }
-        
+
         info.text = s"Applying $filterName at [$x, $y]."
       }
 
