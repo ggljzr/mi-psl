@@ -13,6 +13,8 @@ import scalafx.scene.control.{Button, RadioButton, ToggleGroup}
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
+import scalafx.stage.FileChooser
+import scalafx.stage.FileChooser.ExtensionFilter
 
 import javafx.scene.control.{RadioButton => JfxRadioBtn}
 
@@ -31,12 +33,18 @@ object DepthBlur extends JFXApp {
     minWidth = stageWidth
     minHeight = stageHeight
 
-    title = "some title"
+    title = "DepthBlur"
 
     val img = new Image("file:cones/im2.png")
     val dpt = new Image("file:cones/disp2.png")
 
     var showDepth = false
+
+    val fileChooser = new FileChooser {
+      extensionFilters ++= Seq(
+        new ExtensionFilter("Image Files", Seq("*.png", "*.jpg"))
+      )
+    }
 
     scene = new Scene{
 
@@ -80,6 +88,11 @@ object DepthBlur extends JFXApp {
         display.image = img
         info.text = defaultInfoMessage
         showDepth = false
+      }
+
+      save.onAction = handle{
+        val filename = fileChooser.showSaveDialog(stage)
+        println(s"saving image in $filename")
       }
 
       display.onMouseClicked = (event: MouseEvent) => {

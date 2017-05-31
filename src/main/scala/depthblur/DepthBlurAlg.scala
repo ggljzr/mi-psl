@@ -44,8 +44,7 @@ object DepthBlurAlg {
         val format = PixelFormat.getIntArgbInstance()
 
         for(i <- 7 to (h - 8)){
-        	for(j <- 7 to (w - 8))
-        	{
+        	for(j <- 7 to (w - 8)){
         		val currentDepth = dptReader.getColor(j, i).getRed
         		val k = getKernelSize(currentDepth, targetDepth)
         		val pixBuffer = new Array[Int](k*k)
