@@ -6,14 +6,24 @@ import javafx.scene.image.{WritablePixelFormat, PixelFormat}
 
 object DepthBlurAlg {
 
-	private def getAverage(pixels: Array[Int]) : Int = 
-	{
+	private def getAverage(pixels: Array[Int]) : Int = {
 		val a = 0xFF
 		val rAvg = (pixels.map(p => (p >> 16) & 255).sum) / pixels.length
 		val gAvg = (pixels.map(p => (p >> 8) & 255).sum) / pixels.length
 		val bAvg = (pixels.map(p => p & 255).sum) / pixels.length
 
 		return (a << 24) + (rAvg << 16) + (gAvg << 8) + bAvg
+	}
+
+	private def getKernelSize(currentDepth: Double, targetDepth: Double) : Int = {
+		val depth = (currentDepth - targetDepth).abs
+
+		depth match{
+			case x if x < 0.2 => return 1
+			case x if x < 0.5 => return 5
+			case x if x < 0.7 => return 11
+			case x if x < 0.9 => return 13
+		}
 	}
 
     def boxFilter(x: Int, y: Int, img: Image, dpt: Image) : WritableImage = {
@@ -26,21 +36,22 @@ object DepthBlurAlg {
         val imgReader = img.getPixelReader
         val dptReader = dpt.getPixelReader
 
-        val target_depth = dptReader.getColor(x,y).getRed
+        val targetDepth = dptReader.getColor(x,y).getRed
 
-        println(s"box filter: target depth[$x $y] = $target_depth")
+        println(s"box filter: target depth[$x $y] = $targetDepth")
 
         val writer = res.getPixelWriter
         val format = PixelFormat.getIntArgbInstance()
 
-        
         for(i <- 7 to (h - 8)){
         	for(j <- 7 to (w - 8))
         	{
-        		val pixBuffer = new Array[Int](13*13)
-        		imgReader.getPixels(j-7, i-7, 13, 13, format, pixBuffer, 0, 13)
+        		val currentDepth = dptReader.getColor(j, i).getRed
+        		val k = getKernelSize(currentDepth, targetDepth)
+        		val pixBuffer = new Array[Int](k*k)
+        		imgReader.getPixels(j-(k/2), i-(k/2), k, k, format, pixBuffer, 0, k)
         		val new_pix = getAverage(pixBuffer).toInt
-        		writer.setArgb(j,i,new_pix)
+        		writer.setArgb(j, i, new_pix)
         	}
         }
 
@@ -99,9 +110,9 @@ object DepthBlurAlg {
         		val g = ~(ip >> 8) & 255
         		val b = ~(ip) & 255
 
-        		val new_color = (a << 24) + (r << 16) + (g << 8) + b
+        		val new_pix = (a << 24) + (r << 16) + (g << 8) + b
 
-        		writer.setArgb(j, i, new_color)
+        		writer.setArgb(j, i, new_pix)
         	}
         }
 
