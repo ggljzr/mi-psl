@@ -68,7 +68,7 @@ object DepthBlurAlg {
 
         val targetDepth = dptReader.getArgb(x, y) & 255
 
-        println(s"box filter: target depth[$x $y] = $targetDepth")
+        println(s"$filter : target depth[$x $y] = $targetDepth")
 
         val writer = res.getPixelWriter
         val format = PixelFormat.getIntArgbInstance()
@@ -96,32 +96,6 @@ object DepthBlurAlg {
         //val pixBuffer = new Array[Int](50*50)
         //imgReader.getPixels(x-25, y-25, 50, 50, format, pixBuffer, 0, 50)
         //writer.setPixels(x-25,y-25,50,50,format,pixBuffer,0,50)
-
-        return res
-    }
-
-    def bilateralFilter(x: Int, y: Int, img: Image, dpt: Image) : WritableImage = {
-		println(s"bilateral test: $x $y")
-
-        val w = img.width.toInt
-        val h = img.height.toInt
-
-        val res = new WritableImage(w, h)
-
-        val imgReader = img.getPixelReader
-        val dptReader = dpt.getPixelReader
-
-        val writer = res.getPixelWriter
-
-        for(i <- 0 to (h - 1)){
-        	for(j <- 0 to (w - 1))
-        	{
-        		val ip = imgReader.getArgb(j, i)
-        		val dp = dptReader.getArgb(j, i)
-
-        		writer.setArgb(j, i, ip - dp)
-        	}
-        }
 
         return res
     }
