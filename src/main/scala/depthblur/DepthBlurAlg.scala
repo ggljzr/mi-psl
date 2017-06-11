@@ -40,17 +40,47 @@ object DepthBlurAlg {
 
 	private def getBilateralPixel(pixels: Array[Int], depths: Array[Int], 
 			row: Int, col: Int, pixDepth: Int) : Int = {
-		return 255
+		var wp= 0.0
+		var sumR = 0.0
+		var sumG = 0.0
+		var sumB = 0.0
+
+		val k = sqrt(pixels.length).toInt
+
+		for(i <- 0 to (pixels.length - 1))
+		{
+			val depthDiff = pixDepth - (depths(i) & 255)
+
+			val x = (i % k) + (col - (k/2)).toInt
+			val y = (i / k).toInt + (row - (k/2)).toInt
+			val dist = euclid(row, col, y, x)
+
+			val spatVal = gaussian(dist, sigmaDist)
+			val depthVal = gaussian(depthDiff, sigmaDepth)
+
+			wp += spatVal * depthVal
+			val pixVal = pixels(i)
+
+			sumR += (spatVal * depthVal) * ((pixVal >> 16) & 255).toDouble
+			sumG += (spatVal * depthVal) * ((pixVal >> 8) & 255).toDouble
+			sumB += (spatVal * depthVal) * ((pixVal) & 255).toDouble
+		}
+
+		sumR = (sumR / wp)
+		sumG = (sumG / wp)
+		sumB = (sumB / wp)
+
+		return (0xFF << 24) + (sumR.toInt << 16) + (sumG.toInt << 8) + sumB.toInt
 	}
 
 	private def getKernelSize(currentDepth: Int, targetDepth: Int) : Int = {
 		val depth = (currentDepth - targetDepth).abs
 		depth match{
 			case x if x < 32 => return 1
-			case x if x < 64 => return 5
-			case x if x < 128 => return 7
-			case x if x < 196 => return 11
-			case _ => return 13
+			case x if x < 64 => return 3
+			case x if x < 128 => return 5
+			case x if x < 196 => return 7
+			case _ => return 11
 		}
 	}
 
