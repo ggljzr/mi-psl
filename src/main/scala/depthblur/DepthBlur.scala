@@ -67,7 +67,7 @@ object DepthBlur extends JFXApp {
 
       val buttons = new HBox(5.0, mapToggle, reset, save, load)
       val info = new Label(defaultInfoMessage)
-      
+
       val display = new ImageView(img)
       display.fitWidth = stageWidth.toDouble * 0.8
       display.fitHeight = stageHeight.toDouble * 0.8
@@ -114,9 +114,15 @@ object DepthBlur extends JFXApp {
       }
 
 
+
       display.onMouseClicked = (event: MouseEvent) => {
-        val x = event.sceneX.toInt
-        val y = event.sceneY.toInt
+        //we need to scale coordinates back to original image size
+        val bounds = display.layoutBounds()
+        val scaleX = bounds.width.toDouble / img.width.toDouble
+        val scaleY = bounds.height.toDouble / img.height.toDouble
+
+        val x = (event.sceneX / scaleX).toInt
+        val y = (event.sceneY / scaleY).toInt
 
         //cast to java.scene.control.RadioButton
         //since I need .getText() method
