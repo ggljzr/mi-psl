@@ -4,7 +4,18 @@ import scala.collection.mutable.ArrayBuffer
 import scalafx.scene.image.{Image, WritableImage, PixelReader, PixelWriter}
 import javafx.scene.image.{WritablePixelFormat, PixelFormat}
 
+import scala.math.{exp, sqrt}
+
+object FilterType extends Enumeration
+{
+	type FilterType = Value
+	val BoxFilter, BilateralFilter = Value
+}
+
 object DepthBlurAlg {
+
+	val sigmaDepth = 60
+	val sigmaDist = 60
 
 	private def getAverage(pixels: Array[Int]) : Int = {
 		val a = 0xFF
@@ -15,18 +26,37 @@ object DepthBlurAlg {
 		return (a << 24) + (rAvg << 16) + (gAvg << 8) + bAvg
 	}
 
-	private def getKernelSize(currentDepth: Double, targetDepth: Double) : Int = {
-		val depth = (currentDepth - targetDepth).abs
+	private def gaussian(z: Double, sigma: Double) : Double = 
+	{
+		val n = (z * z) * -1
+		val d = (1 * sigma * sigma)
+		return exp(n/d)
+	}
 
+	private def euclid(x1: Int, x2: Int, y1: Int, y2:Int) : Double = {
+		val d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+		return sqrt(d)
+	}
+
+	private def getBilateralPixel(pixels: Array[Int], depths: Array[Int], 
+			row: Int, col: Int, pixDepth: Int) : Int = {
+		return 255
+	}
+
+	private def getKernelSize(currentDepth: Int, targetDepth: Int) : Int = {
+		val depth = (currentDepth - targetDepth).abs
 		depth match{
-			case x if x < 0.2 => return 1
-			case x if x < 0.5 => return 5
-			case x if x < 0.7 => return 11
-			case x if x < 0.9 => return 13
+			case x if x < 32 => return 1
+			case x if x < 64 => return 5
+			case x if x < 128 => return 7
+			case x if x < 196 => return 11
+			case _ => return 13
 		}
 	}
 
-    def boxFilter(x: Int, y: Int, img: Image, dpt: Image) : WritableImage = {
+	import FilterType._
+
+    def blurFilter(x: Int, y: Int, img: Image, dpt: Image, filter: FilterType) : WritableImage = {
 
         val w = img.width.toInt
         val h = img.height.toInt
@@ -36,7 +66,7 @@ object DepthBlurAlg {
         val imgReader = img.getPixelReader
         val dptReader = dpt.getPixelReader
 
-        val targetDepth = dptReader.getColor(x,y).getRed
+        val targetDepth = dptReader.getArgb(x, y) & 255
 
         println(s"box filter: target depth[$x $y] = $targetDepth")
 
@@ -45,12 +75,21 @@ object DepthBlurAlg {
 
         for(i <- 7 to (h - 8)){
         	for(j <- 7 to (w - 8)){
-        		val currentDepth = dptReader.getColor(j, i).getRed
+        		val currentDepth = dptReader.getArgb(j, i) & 255
         		val k = getKernelSize(currentDepth, targetDepth)
         		val pixBuffer = new Array[Int](k*k)
         		imgReader.getPixels(j-(k/2), i-(k/2), k, k, format, pixBuffer, 0, k)
-        		val new_pix = getAverage(pixBuffer).toInt
-        		writer.setArgb(j, i, new_pix)
+
+        		if(filter == BoxFilter){
+        			val newPix = getAverage(pixBuffer).toInt
+        			writer.setArgb(j, i, newPix)
+        		}
+        		else if(filter == BilateralFilter){
+        			val depthBuffer = new Array[Int](k * k)
+        			dptReader.getPixels(j - (k / 2), i - (k / 2), k, k, format, depthBuffer, 0, k)
+        			val newPix = getBilateralPixel(pixBuffer, depthBuffer, i, j, currentDepth)
+        			writer.setArgb(j, i, newPix)
+        		}
         	}
         }
 

@@ -21,6 +21,7 @@ import javafx.scene.control.{RadioButton => JfxRadioBtn}
 import scalafx.event.ActionEvent
 
 import depthblur.DepthBlurAlg
+import depthblur.FilterType._
 
 
 object DepthBlur extends JFXApp {
@@ -131,10 +132,10 @@ object DepthBlur extends JFXApp {
 
         filterName match {
           case "Box filter" => { 
-            display.image = DepthBlurAlg.boxFilter(x, y, img, dpt)
+            display.image = DepthBlurAlg.blurFilter(x, y, img, dpt, BoxFilter)
           }
           case "Bilateral filter" => { 
-            display.image = DepthBlurAlg.bilateralFilter(x, y, img, dpt)
+            display.image = DepthBlurAlg.blurFilter(x, y, img, dpt, BilateralFilter)
           }
           case "Negation" => {
             display.image = DepthBlurAlg.negation(img)
