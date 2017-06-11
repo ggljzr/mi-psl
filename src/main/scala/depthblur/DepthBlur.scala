@@ -25,18 +25,19 @@ import depthblur.DepthBlurAlg
 
 object DepthBlur extends JFXApp {
 
-  val stageWidth = 500
-  val stageHeight = 500
+  val stageWidth = 800
+  val stageHeight = 600
 
   stage = new PrimaryStage {
 
-    minWidth = stageWidth
-    minHeight = stageHeight
+    width = stageWidth
+    height = stageHeight
+    resizable = false
 
     title = "DepthBlur"
 
-    val img = new Image("file:cones/im2.png")
-    val dpt = new Image("file:cones/disp2.png")
+    var img = new Image("file:cones/im2.png")
+    var dpt = new Image("file:cones/disp2.png")
 
     var showDepth = false
 
@@ -66,10 +67,21 @@ object DepthBlur extends JFXApp {
 
       val buttons = new HBox(5.0, mapToggle, reset, save, load)
       val info = new Label(defaultInfoMessage)
+      
       val display = new ImageView(img)
+      display.fitWidth = stageWidth.toDouble * 0.8
+      display.fitHeight = stageHeight.toDouble * 0.8
+      display.preserveRatio = true
 
       val displayControl = new VBox(5.0, display, info, buttons)
       val filterSelect = new VBox(5.0, rbBoxFilter, rbBilateralFilter, rbNegation)
+
+      def resetScene {
+        showDepth = false
+        display.image = img
+        mapToggle.text = "Show depth map"
+        info.text =defaultInfoMessage
+      }
 
       mapToggle.onAction = handle{
         if(showDepth == true){
@@ -85,10 +97,7 @@ object DepthBlur extends JFXApp {
       }
 
       reset.onAction = handle{
-        mapToggle.text = "Show depth map"
-        display.image = img
-        info.text = defaultInfoMessage
-        showDepth = false
+        resetScene
       }
 
       save.onAction = handle{
@@ -99,6 +108,9 @@ object DepthBlur extends JFXApp {
       load.onAction = handle{
         val filename = fileChooser.showOpenDialog(stage)
         println(s"opening image in $filename")
+        img = new Image(s"file:$filename")
+        resetScene
+        info.text = s"Loaded image: $filename"
       }
 
 
