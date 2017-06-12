@@ -128,6 +128,8 @@ object DepthBlur extends JFXApp {
             loadDepth.disable = false
             resetScene
             println("loaded new image")
+            rbBilateralFilter.disable = true
+            rbBoxFilter.disable = true
           }
           case None => println("no image specified")
         }
