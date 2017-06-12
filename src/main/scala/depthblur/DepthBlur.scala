@@ -56,6 +56,8 @@ object DepthBlur extends JFXApp {
       val reset = new Button("Reset")
       val save = new Button("Save image")
       val load = new Button("Load image")
+      val loadDepth = new Button("Load depth map")
+      loadDepth.disable = true
 
       val filterGroup = new ToggleGroup()
       val rbBoxFilter = new RadioButton("Box filter")
@@ -66,7 +68,7 @@ object DepthBlur extends JFXApp {
       rbNegation.setToggleGroup(filterGroup)
       rbBoxFilter.setSelected(true)
 
-      val buttons = new HBox(5.0, mapToggle, reset, save, load)
+      val buttons = new HBox(5.0, mapToggle, reset, save, load, loadDepth)
       val info = new Label(defaultInfoMessage)
 
       val display = new ImageView(img)
@@ -83,6 +85,17 @@ object DepthBlur extends JFXApp {
         mapToggle.text = "Show depth map"
         info.text =defaultInfoMessage
       }
+
+      def loadImage : Option[Image] = {
+        val file = fileChooser.showOpenDialog(stage)
+
+        if(file != null)
+        {
+          info.text = s"Loaded image from: $file"
+          return Option(new Image(s"file:$file"))
+        }
+        return Option(null)
+      } 
 
       mapToggle.onAction = handle{
         if(showDepth == true){
@@ -106,15 +119,27 @@ object DepthBlur extends JFXApp {
         println(s"saving image in $filename")
       }
 
-      load.onAction = handle{
-        val filename = fileChooser.showOpenDialog(stage)
-        println(s"opening image in $filename")
-        img = new Image(s"file:$filename")
-        resetScene
-        info.text = s"Loaded image: $filename"
+      load.onAction = handle {
+        loadImage match {
+          case Some(image) => {
+            img = image
+            loadDepth.disable = false
+            resetScene
+            println("loaded new image")
+          }
+          case None => println("no image specified")
+        }
       }
 
-
+      loadDepth.onAction = handle {
+        loadImage match{
+          case Some(image) => {
+            dpt = image
+            println("loaded new depth map")
+          }
+          case None => println("no depthmap specified")
+        }
+      }
 
       display.onMouseClicked = (event: MouseEvent) => {
         //we need to scale coordinates back to original image size
