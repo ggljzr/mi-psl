@@ -66,6 +66,7 @@ object DepthBlur extends JFXApp {
       val load = new Button("Load image")
       val loadDepth = new Button("Load depth map")
       loadDepth.disable = true
+      mapToggle.disable = true
 
       val filterGroup = new ToggleGroup()
       val rbBoxFilter = new RadioButton("Box filter")
@@ -184,6 +185,7 @@ object DepthBlur extends JFXApp {
               info.text = s"Loaded depth map from: $filename"
               rbBilateralFilter.disable = false
               rbBoxFilter.disable = false
+              mapToggle.disable = false
             }
             else {
               info.text = "Image and depth map size does not match"
