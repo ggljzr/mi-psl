@@ -23,6 +23,11 @@ import scalafx.event.ActionEvent
 import depthblur.DepthBlurAlg
 import depthblur.FilterType._
 
+import java.awt.image.BufferedImage
+import java.io.File
+
+import javafx.embed.swing.SwingFXUtils
+import javax.imageio.ImageIO
 
 object DepthBlur extends JFXApp {
 
@@ -46,6 +51,7 @@ object DepthBlur extends JFXApp {
       extensionFilters ++= Seq(
         new ExtensionFilter("Image Files", Seq("*.png", "*.jpg"))
       )
+      initialFileName = "image.png"
     }
 
     scene = new Scene{
@@ -89,15 +95,11 @@ object DepthBlur extends JFXApp {
         info.text =defaultInfoMessage
       }
 
-      def loadImage(reset: Boolean = false) : Option[Image] = {
+      def loadImage : Option[(Image, String)] = {
         val file = fileChooser.showOpenDialog(stage)
 
         if(file != null) {
-          if(reset) resetScene
-
-          info.text = s"Loaded image from: $file"
-
-          return Option(new Image(s"file:$file"))
+          return Option((new Image(s"file:$file"), file.toString))
         }
         return Option(null)
       } 
@@ -120,16 +122,24 @@ object DepthBlur extends JFXApp {
       }
 
       save.onAction = handle {
-        val filename = fileChooser.showSaveDialog(stage)
-        println(s"saving image in $filename")
+        val imageFile = fileChooser.showSaveDialog(stage)
+        if(imageFile != null) {
+          val bImage = SwingFXUtils.fromFXImage(display.image.value, null)
+          ImageIO.write(bImage, "png", imageFile)
+          println(s"saved in: $imageFile")
+          info.text = s"Picture saved in: $imageFile"
+        }
       }
 
       load.onAction = handle {
-        loadImage(reset = true) match {
+        loadImage match {
           case Some(image) => {
-            img = image
+            img = image._1
+            val filename = image._2
             loadDepth.disable = false
             println("loaded new image")
+            resetScene
+            info.text = s"Loaded image from: $filename"
             rbBilateralFilter.disable = true
             rbBoxFilter.disable = true
             rbNegation.setSelected(true)
@@ -139,13 +149,15 @@ object DepthBlur extends JFXApp {
       }
 
       loadDepth.onAction = handle {
-        loadImage() match{
+        loadImage match{
           case Some(image) => {
-            val w = image.width.toInt
-            val h = image.height.toInt
+            val w = image._1.width.toInt
+            val h = image._1.height.toInt
             if(h == img.height.toInt && w == img.width.toInt) {
-              dpt = image
+              dpt = image._1
+              val filename = image._2
               println("loaded new depth map")
+              info.text = s"Loaded depth map from: $filename"
               rbBilateralFilter.disable = false
               rbBoxFilter.disable = false
             }
