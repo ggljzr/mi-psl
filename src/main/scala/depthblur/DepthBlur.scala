@@ -130,6 +130,7 @@ object DepthBlur extends JFXApp {
             println("loaded new image")
             rbBilateralFilter.disable = true
             rbBoxFilter.disable = true
+            rbNegation.setSelected(true)
           }
           case None => println("no image specified")
         }
