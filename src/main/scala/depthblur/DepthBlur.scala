@@ -50,7 +50,7 @@ object DepthBlur extends JFXApp {
 
     scene = new Scene{
 
-      val defaultInfoMessage = "Click image to apply filter."
+      val defaultInfoMessage = "Click image to apply filter"
 
       val mapToggle = new Button("Show depth map")
       val reset = new Button("Reset")
@@ -66,7 +66,10 @@ object DepthBlur extends JFXApp {
       rbBoxFilter.setToggleGroup(filterGroup)
       rbBilateralFilter.setToggleGroup(filterGroup)
       rbNegation.setToggleGroup(filterGroup)
-      rbBoxFilter.setSelected(true)
+      rbNegation.setSelected(true)
+
+      rbBoxFilter.disable = true
+      rbBilateralFilter.disable = true
 
       val buttons = new HBox(5.0, mapToggle, reset, save, load, loadDepth)
       val info = new Label(defaultInfoMessage)
@@ -77,7 +80,7 @@ object DepthBlur extends JFXApp {
       display.preserveRatio = true
 
       val displayControl = new VBox(5.0, display, info, buttons)
-      val filterSelect = new VBox(5.0, rbBoxFilter, rbBilateralFilter, rbNegation)
+      val filterSelect = new VBox(5.0, rbNegation, rbBoxFilter, rbBilateralFilter)
 
       def resetScene {
         showDepth = false
@@ -89,8 +92,7 @@ object DepthBlur extends JFXApp {
       def loadImage : Option[Image] = {
         val file = fileChooser.showOpenDialog(stage)
 
-        if(file != null)
-        {
+        if(file != null) {
           info.text = s"Loaded image from: $file"
           return Option(new Image(s"file:$file"))
         }
@@ -134,8 +136,18 @@ object DepthBlur extends JFXApp {
       loadDepth.onAction = handle {
         loadImage match{
           case Some(image) => {
-            dpt = image
-            println("loaded new depth map")
+            val w = image.width.toInt
+            val h = image.height.toInt
+            if(h == img.height.toInt && w == img.width.toInt) {
+              dpt = image
+              println("loaded new depth map")
+              rbBilateralFilter.disable = false
+              rbBoxFilter.disable = false
+            }
+            else {
+              info.text = "Image and depth map size does not match"
+              println("no matching image/depth map")
+            }
           }
           case None => println("no depthmap specified")
         }
