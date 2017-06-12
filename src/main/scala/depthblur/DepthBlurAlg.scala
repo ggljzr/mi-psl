@@ -12,6 +12,8 @@ object FilterType extends Enumeration
 	val BoxFilter, BilateralFilter = Value
 }
 
+	import FilterType._
+
 object DepthBlurAlg {
 
 	val sigmaDepth = 60
@@ -26,8 +28,7 @@ object DepthBlurAlg {
 		return (a << 24) + (rAvg << 16) + (gAvg << 8) + bAvg
 	}
 
-	private def gaussian(z: Double, sigma: Double) : Double = 
-	{
+	private def gaussian(z: Double, sigma: Double) : Double = {
 		val n = (z * z) * -1
 		val d = (1 * sigma * sigma)
 		return exp(n/d)
@@ -47,8 +48,7 @@ object DepthBlurAlg {
 
 		val k = sqrt(pixels.length).toInt
 
-		for(i <- 0 to (pixels.length - 1))
-		{
+		for(i <- 0 to (pixels.length - 1)) {
 			val depthDiff = pixDepth - (depths(i) & 255)
 
 			val x = (i % k) + (col - (k/2)).toInt
@@ -75,7 +75,7 @@ object DepthBlurAlg {
 
 	private def getKernelSize(currentDepth: Int, targetDepth: Int) : Int = {
 		val depth = (currentDepth - targetDepth).abs
-		depth match{
+		depth match {
 			case x if x < 32 => return 1
 			case x if x < 64 => return 3
 			case x if x < 128 => return 5
@@ -84,80 +84,73 @@ object DepthBlurAlg {
 		}
 	}
 
-	import FilterType._
+	def blurFilter(x: Int, y: Int, img: Image, dpt: Image, filter: FilterType) : WritableImage = {
 
-    def blurFilter(x: Int, y: Int, img: Image, dpt: Image, filter: FilterType) : WritableImage = {
+		val w = img.width.toInt
+		val h = img.height.toInt
 
-        val w = img.width.toInt
-        val h = img.height.toInt
+		val res = new WritableImage(w, h)
 
-        val res = new WritableImage(w, h)
+		val imgReader = img.getPixelReader
+		val dptReader = dpt.getPixelReader
 
-        val imgReader = img.getPixelReader
-        val dptReader = dpt.getPixelReader
+		val targetDepth = dptReader.getArgb(x, y) & 255
 
-        val targetDepth = dptReader.getArgb(x, y) & 255
+		println(s"$filter : target depth[$x $y] = $targetDepth")
 
-        println(s"$filter : target depth[$x $y] = $targetDepth")
+		val writer = res.getPixelWriter
+		val format = PixelFormat.getIntArgbInstance()
 
-        val writer = res.getPixelWriter
-        val format = PixelFormat.getIntArgbInstance()
+		for(i <- 7 to (h - 8)){
+			for(j <- 7 to (w - 8)){
+				val currentDepth = dptReader.getArgb(j, i) & 255
+				val k = getKernelSize(currentDepth, targetDepth)
+				val pixBuffer = new Array[Int](k*k)
+				imgReader.getPixels(j-(k/2), i-(k/2), k, k, format, pixBuffer, 0, k)
 
-        for(i <- 7 to (h - 8)){
-        	for(j <- 7 to (w - 8)){
-        		val currentDepth = dptReader.getArgb(j, i) & 255
-        		val k = getKernelSize(currentDepth, targetDepth)
-        		val pixBuffer = new Array[Int](k*k)
-        		imgReader.getPixels(j-(k/2), i-(k/2), k, k, format, pixBuffer, 0, k)
+				if(filter == BoxFilter){
+					val newPix = getAverage(pixBuffer).toInt
+					writer.setArgb(j, i, newPix)
+				}
+				else if(filter == BilateralFilter){
+					val depthBuffer = new Array[Int](k * k)
+					dptReader.getPixels(j - (k / 2), i - (k / 2), k, k, format, depthBuffer, 0, k)
+					val newPix = getBilateralPixel(pixBuffer, depthBuffer, i, j, currentDepth)
+					writer.setArgb(j, i, newPix)
+				}
+			}
+		}
 
-        		if(filter == BoxFilter){
-        			val newPix = getAverage(pixBuffer).toInt
-        			writer.setArgb(j, i, newPix)
-        		}
-        		else if(filter == BilateralFilter){
-        			val depthBuffer = new Array[Int](k * k)
-        			dptReader.getPixels(j - (k / 2), i - (k / 2), k, k, format, depthBuffer, 0, k)
-        			val newPix = getBilateralPixel(pixBuffer, depthBuffer, i, j, currentDepth)
-        			writer.setArgb(j, i, newPix)
-        		}
-        	}
-        }
+		return res
+	}
 
-        //val pixBuffer = new Array[Int](50*50)
-        //imgReader.getPixels(x-25, y-25, 50, 50, format, pixBuffer, 0, 50)
-        //writer.setPixels(x-25,y-25,50,50,format,pixBuffer,0,50)
+	def negation(img: Image) : WritableImage = {
+	println("negation")
 
-        return res
-    }
+		val w = img.width.toInt
+		val h = img.height.toInt
 
-    def negation(img: Image) : WritableImage = {
-		println("negation")
+		val res = new WritableImage(w, h)
 
-        val w = img.width.toInt
-        val h = img.height.toInt
+		val imgReader = img.getPixelReader
 
-        val res = new WritableImage(w, h)
+		val writer = res.getPixelWriter
 
-        val imgReader = img.getPixelReader
+		for(i <- 0 to (h - 1)){
+			for(j <- 0 to (w - 1)){
+				val ip = imgReader.getArgb(j, i)
 
-        val writer = res.getPixelWriter
+				val a = (ip >> 24) & 255
+				val r = ~(ip >> 16) & 255
+				val g = ~(ip >> 8) & 255
+				val b = ~(ip) & 255
 
-        for(i <- 0 to (h - 1)){
-        	for(j <- 0 to (w - 1))
-        	{
-        		val ip = imgReader.getArgb(j, i)
+				val new_pix = (a << 24) + (r << 16) + (g << 8) + b
 
-        		val a = (ip >> 24) & 255
-        		val r = ~(ip >> 16) & 255
-        		val g = ~(ip >> 8) & 255
-        		val b = ~(ip) & 255
+				writer.setArgb(j, i, new_pix)
+			}
+		}
 
-        		val new_pix = (a << 24) + (r << 16) + (g << 8) + b
-
-        		writer.setArgb(j, i, new_pix)
-        	}
-        }
-
-        return res
-    }
+		return res
+	}
 }
