@@ -89,44 +89,46 @@ object DepthBlur extends JFXApp {
         info.text =defaultInfoMessage
       }
 
-      def loadImage : Option[Image] = {
+      def loadImage(reset: Boolean = false) : Option[Image] = {
         val file = fileChooser.showOpenDialog(stage)
 
         if(file != null) {
+          if(reset) resetScene
+
           info.text = s"Loaded image from: $file"
+
           return Option(new Image(s"file:$file"))
         }
         return Option(null)
       } 
 
       mapToggle.onAction = handle{
-        if(showDepth == true){
+        if(showDepth == true) {
           mapToggle.text = "Show depth map"
           display.image = img
           showDepth = false
         }
-        else{
+        else {
           mapToggle.text = "Show original image"
           display.image = dpt
           showDepth = true
         }
       }
 
-      reset.onAction = handle{
+      reset.onAction = handle {
         resetScene
       }
 
-      save.onAction = handle{
+      save.onAction = handle {
         val filename = fileChooser.showSaveDialog(stage)
         println(s"saving image in $filename")
       }
 
       load.onAction = handle {
-        loadImage match {
+        loadImage(reset = true) match {
           case Some(image) => {
             img = image
             loadDepth.disable = false
-            resetScene
             println("loaded new image")
             rbBilateralFilter.disable = true
             rbBoxFilter.disable = true
@@ -137,7 +139,7 @@ object DepthBlur extends JFXApp {
       }
 
       loadDepth.onAction = handle {
-        loadImage match{
+        loadImage() match{
           case Some(image) => {
             val w = image.width.toInt
             val h = image.height.toInt
