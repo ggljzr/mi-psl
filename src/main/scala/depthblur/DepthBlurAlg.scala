@@ -16,9 +16,6 @@ object FilterType extends Enumeration
 
 object DepthBlurAlg {
 
-	val sigmaDepth = 60
-	val sigmaDist = 60
-
 	private def getAverage(pixels: Array[Int]) : Int = {
 		val a = 0xFF
 		val rAvg = (pixels.map(p => (p >> 16) & 255).sum) / pixels.length
@@ -40,7 +37,8 @@ object DepthBlurAlg {
 	}
 
 	private def getBilateralPixel(pixels: Array[Int], depths: Array[Int], 
-			row: Int, col: Int, pixDepth: Int) : Int = {
+			row: Int, col: Int, pixDepth: Int, 
+			spatialSigma: Double, depthSigma: Double) : Int = {
 		var wp= 0.0
 		var sumR = 0.0
 		var sumG = 0.0
@@ -55,8 +53,8 @@ object DepthBlurAlg {
 			val y = (i / k).toInt + (row - (k/2)).toInt
 			val dist = euclid(row, col, y, x)
 
-			val spatVal = gaussian(dist, sigmaDist)
-			val depthVal = gaussian(depthDiff, sigmaDepth)
+			val spatVal = gaussian(dist, spatialSigma)
+			val depthVal = gaussian(depthDiff, depthSigma)
 
 			wp += spatVal * depthVal
 			val pixVal = pixels(i)
@@ -84,7 +82,10 @@ object DepthBlurAlg {
 		}
 	}
 
-	def blurFilter(x: Int, y: Int, img: Image, dpt: Image, filter: FilterType) : WritableImage = {
+	def blurFilter(x: Int, y: Int, 
+		img: Image, dpt: Image, 
+		filter: FilterType, 
+		depthSigma: Double = 1.0, spatialSigma: Double = 1.0) : WritableImage = {
 
 		val w = img.width.toInt
 		val h = img.height.toInt
@@ -115,7 +116,8 @@ object DepthBlurAlg {
 				else if(filter == BilateralFilter){
 					val depthBuffer = new Array[Int](k * k)
 					dptReader.getPixels(j - (k / 2), i - (k / 2), k, k, format, depthBuffer, 0, k)
-					val newPix = getBilateralPixel(pixBuffer, depthBuffer, i, j, currentDepth)
+					val newPix = getBilateralPixel(pixBuffer, depthBuffer, i, j,
+					 currentDepth, spatialSigma, depthSigma)
 					writer.setArgb(j, i, newPix)
 				}
 			}

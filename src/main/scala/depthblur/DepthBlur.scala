@@ -9,7 +9,7 @@ import scalafx.scene.Scene
 import scalafx.scene.control.Label
 import scalafx.scene.layout.BorderPane
 import scalafx.scene.image.{Image, ImageView}
-import scalafx.scene.control.{Button, RadioButton, ToggleGroup}
+import scalafx.scene.control.{Button, RadioButton, ToggleGroup, Slider}
 import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{VBox, HBox}
 import scalafx.scene.input.MouseEvent
@@ -57,6 +57,8 @@ object DepthBlur extends JFXApp {
     scene = new Scene{
 
       val defaultInfoMessage = "Click image to apply filter"
+      val defaultDepthSigma = 60
+      val defaultSpatialSigma = 60
 
       val mapToggle = new Button("Show depth map")
       val reset = new Button("Reset")
@@ -77,6 +79,11 @@ object DepthBlur extends JFXApp {
       rbBoxFilter.disable = true
       rbBilateralFilter.disable = true
 
+      val spatialSigma = new Slider(1, 255, defaultSpatialSigma)
+      val depthSigma = new Slider(1, 255, defaultDepthSigma)
+      val spatialSigmaL = new Label(s"Spatial sigma: $defaultSpatialSigma")
+      val depthSigmaL = new Label(s"Depth sigma: $defaultDepthSigma")
+
       val buttons = new HBox(5.0, mapToggle, reset, save, load, loadDepth)
       val info = new Label(defaultInfoMessage)
 
@@ -86,7 +93,12 @@ object DepthBlur extends JFXApp {
       display.preserveRatio = true
 
       val displayControl = new VBox(5.0, display, info, buttons)
-      val filterSelect = new VBox(5.0, rbNegation, rbBoxFilter, rbBilateralFilter)
+      val bilateralControl = new VBox(3.0, rbBilateralFilter, 
+                                      spatialSigmaL, spatialSigma, 
+                                      depthSigmaL, depthSigma)
+      val filterSelect = new VBox(5.0, rbNegation, 
+                                       rbBoxFilter, 
+                                       bilateralControl)
 
       def resetScene {
         showDepth = false
@@ -103,6 +115,18 @@ object DepthBlur extends JFXApp {
         }
         return Option(null)
       } 
+
+      spatialSigma.valueProperty.addListener { 
+        (o: javafx.beans.value.ObservableValue[_ <: Number], oldVal: Number, newVal: Number) =>
+        val s = newVal.doubleValue
+        spatialSigmaL.text = f"Spatial sigma: $s%.2f"
+      }
+
+      depthSigma.valueProperty.addListener { 
+        (o: javafx.beans.value.ObservableValue[_ <: Number], oldVal: Number, newVal: Number) =>
+        val s = newVal.doubleValue
+        depthSigmaL.text = f"Depth sigma: $s%.2f"
+      }
 
       mapToggle.onAction = handle{
         if(showDepth == true) {
@@ -186,10 +210,13 @@ object DepthBlur extends JFXApp {
 
         filterName match {
           case "Box filter" => { 
-            display.image = DepthBlurAlg.blurFilter(x, y, img, dpt, BoxFilter)
+            display.image = DepthBlurAlg.blurFilter(x, y, 
+              img, dpt, BoxFilter)
           }
           case "Bilateral filter" => { 
-            display.image = DepthBlurAlg.blurFilter(x, y, img, dpt, BilateralFilter)
+            display.image = DepthBlurAlg.blurFilter(x, y, 
+              img, dpt, BilateralFilter, 
+              spatialSigma.value.toDouble, depthSigma.value.toDouble)
           }
           case "Negation" => {
             display.image = DepthBlurAlg.negation(img)
