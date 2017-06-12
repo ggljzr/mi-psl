@@ -85,7 +85,7 @@ object DepthBlur extends JFXApp {
       val spatialSigmaL = new Label(s"Spatial sigma: $defaultSpatialSigma")
       val depthSigmaL = new Label(s"Depth sigma: $defaultDepthSigma")
 
-      val buttons = new HBox(5.0, mapToggle, reset, save, load, loadDepth)
+      val buttons = new HBox(5.0, reset, save, load, loadDepth, mapToggle)
       val info = new Label(defaultInfoMessage)
 
       val display = new ImageView(img)
