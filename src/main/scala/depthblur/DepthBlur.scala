@@ -42,9 +42,8 @@ object DepthBlur extends JFXApp {
 
     title = "DepthBlur"
 
-    var img = new Image("file:cones/im2.png")
-    var dpt = new Image("file:cones/disp2.png")
-
+    var img = new Image("file:resources/placeholder.png")
+    var dpt = new Image("file:resources/placeholder.png")
     var showDepth = false
 
     val fileChooser = new FileChooser {
