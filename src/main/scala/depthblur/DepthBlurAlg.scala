@@ -12,10 +12,17 @@ object FilterType extends Enumeration
 	val BoxFilter, BilateralFilter = Value
 }
 
-	import FilterType._
+import FilterType._
 
 object DepthBlurAlg {
 
+	/*
+	Calculates average for every color channel in array of pixels
+	(for example from PixelReader.getPixels method)
+
+	Returns average color values composed into 32 bit integer.
+	Alpha channel (top 8 bits of returned integer) is always 0xFF.
+	*/
 	private def getAverage(pixels: Array[Int]) : Int = {
 		val a = 0xFF
 		val rAvg = (pixels.map(p => (p >> 16) & 255).sum) / pixels.length
@@ -31,11 +38,22 @@ object DepthBlurAlg {
 		return exp(n/d)
 	}
 
+	/*
+	Calculates euclid distance between two points in 2d plane
+	*/
 	private def euclid(x1: Int, x2: Int, y1: Int, y2:Int) : Double = {
 		val d = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
 		return sqrt(d)
 	}
 
+	/*
+	Calculates value of a filtered pixel from array of surrounding pixels and their depths, using bilateral filter.
+	Weights of bilateral filter are distance between pixels and difference of pixel depths.
+
+	For more info about bilateral filter see: https://en.wikipedia.org/wiki/Bilateral_filter.
+
+	Returns argb values composed into 32bit integer. Alpha channel is always 0xFF.
+	*/
 	private def getBilateralPixel(pixels: Array[Int], depths: Array[Int], 
 			row: Int, col: Int, pixDepth: Int, 
 			spatialSigma: Double, depthSigma: Double) : Int = {
@@ -71,6 +89,11 @@ object DepthBlurAlg {
 		return (0xFF << 24) + (sumR.toInt << 16) + (sumG.toInt << 8) + sumB.toInt
 	}
 
+	/*
+	Returns kernel size based on difference of pixel depths. This is used to control
+	how blurred different portions of image should be: bigger difference => larger kernel
+	=> more blur.
+	*/
 	private def getKernelSize(currentDepth: Int, targetDepth: Int) : Int = {
 		val depth = (currentDepth - targetDepth).abs
 		depth match {
@@ -82,6 +105,25 @@ object DepthBlurAlg {
 		}
 	}
 
+	/*
+	Applies selected blur filter to the image.
+
+	@x : Int, @y : Int -- point in depth map which sets the focused depth. 
+												Portions of image with depth same as this point will
+												remain unblurred. Larger difference between this point
+												and filtered pixel => more blurring of the filtered pixel
+
+	@img : Image, @dpt : Image -- Input image and its depth map. Depth map should have
+															 values between 0-255
+	@filter : FilterType -- filter to be used for image blurring (see FilterType). 
+													Should be either BoxFilter or BilateralFilter.
+	@depthSigma : Double, @spatialSigma : Double -- sigma parameters for gaussian functions
+																									used for bilateral filtering 
+																									(see https://en.wikipedia.org/wiki/Bilateral_filter).
+																									Does not have effect on box filtering.
+
+	Method returns filtered image as WritableImage class.
+	*/
 	def blurFilter(x: Int, y: Int, 
 		img: Image, dpt: Image, 
 		filter: FilterType, 
@@ -126,6 +168,9 @@ object DepthBlurAlg {
 		return res
 	}
 
+	/*
+	Performs simple bit negation of every color channel within image.
+	*/
 	def negation(img: Image) : WritableImage = {
 	println("negation")
 
