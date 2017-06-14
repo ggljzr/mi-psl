@@ -4,9 +4,9 @@ Semestral work for MI-PSL (programing in Scala) course. Simple program for apply
 ## Requirements
 
 * [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/index.html)*
-* [sbt](http://www.scala-sbt.org/)
+* [SBT](http://www.scala-sbt.org/)
 
-* If you want to use different JDK, like [OpenJDK](http://openjdk.java.net/), you may have to install JavaFX library separately.
+*If you want to use different JDK, like [OpenJDK](http://openjdk.java.net/), you may have to install JavaFX library separately.
 
 ## Build and run
 
@@ -16,3 +16,9 @@ $ sbt run
 ```
 
 This should collect all dependencies, build and run the program.
+
+## Usage
+
+Simply load image with it depth map and apply selected filter by clicking on image preview. Portions of image will be blurred based on depth difference between their depth and depth of the point where you clicked.
+
+When selecting depth map, be sure to pick one that corresponds to selected image (at very least dimensions of depth map should be same as image dimensions).
